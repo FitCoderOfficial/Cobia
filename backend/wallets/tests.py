@@ -347,3 +347,91 @@ class TossPaymentConfirmViewTestCase(TestCase):
         })
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+class RegisterViewTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.register_url = reverse('register')
+        self.valid_payload = {
+            'email': 'test@example.com',
+            'password': 'testpass123',
+            'nickname': 'TestUser'
+        }
+        
+    def test_successful_registration(self):
+        """Test successful user registration"""
+        response = self.client.post(
+            self.register_url,
+            self.valid_payload,
+            format='json'
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data['success'])
+        self.assertEqual(response.data['message'], 'User registered successfully')
+        self.assertEqual(response.data['data']['email'], self.valid_payload['email'])
+        self.assertEqual(response.data['data']['nickname'], self.valid_payload['nickname'])
+        self.assertEqual(response.data['data']['subscription_tier'], 'FREE')
+        
+        # Verify JWT tokens are present
+        self.assertIn('access', response.data['data'])
+        self.assertIn('refresh', response.data['data'])
+        self.assertTrue(len(response.data['data']['access']) > 0)
+        self.assertTrue(len(response.data['data']['refresh']) > 0)
+        
+        # Verify user was created in database
+        user = User.objects.get(email=self.valid_payload['email'])
+        self.assertEqual(user.first_name, self.valid_payload['nickname'])
+        self.assertEqual(user.subscription_tier, 'FREE')
+        
+    def test_duplicate_email_registration(self):
+        """Test registration with duplicate email"""
+        # Create a user first
+        User.objects.create_user(
+            username=self.valid_payload['email'],  # Using email as username
+            email=self.valid_payload['email'],
+            password=self.valid_payload['password'],
+            first_name=self.valid_payload['nickname']
+        )
+        
+        response = self.client.post(
+            self.register_url,
+            self.valid_payload,
+            format='json'
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error']['code'], 'EMAIL_EXISTS')
+        self.assertEqual(response.data['error']['message'], 'Email already registered')
+        
+    def test_missing_required_fields(self):
+        """Test registration with missing required fields"""
+        # Test missing email
+        payload = self.valid_payload.copy()
+        del payload['email']
+        response = self.client.post(self.register_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error']['code'], 'MISSING_FIELDS')
+        
+        # Test missing password
+        payload = self.valid_payload.copy()
+        del payload['password']
+        response = self.client.post(self.register_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error']['code'], 'MISSING_FIELDS')
+        
+        # Test missing nickname
+        payload = self.valid_payload.copy()
+        del payload['nickname']
+        response = self.client.post(self.register_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error']['code'], 'MISSING_FIELDS')
+        
+    def test_invalid_email_format(self):
+        """Test registration with invalid email format"""
+        payload = self.valid_payload.copy()
+        payload['email'] = 'invalid-email'
+        response = self.client.post(self.register_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error']['code'], 'INVALID_EMAIL')
+        self.assertEqual(response.data['error']['message'], 'Invalid email format')

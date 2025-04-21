@@ -9,7 +9,8 @@ from .views import (
     AdminPaymentHistoryView,
     BTCPaymentConfirmView,
     BTCSubscriptionStatusView,
-    AdminSubscriptionListView
+    AdminSubscriptionListView,
+    RegisterView
 )
 
 # DRF router for ViewSets
@@ -21,6 +22,9 @@ router.register(r'reports', ReportViewSet, basename='report')
 urlpatterns = [
     # Include router URLs
     path('', include(router.urls)),
+    
+    # Auth endpoints
+    path('auth/register/', RegisterView.as_view(), name='register'),
     
     # Payment endpoints
     path('payments/initiate/', TossPaymentInitiateView.as_view(), name='payment-initiate'),

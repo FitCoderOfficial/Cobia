@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.utils import timezone
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     TossPayment, 
     activate_subscription, 
@@ -770,3 +771,135 @@ class AdminSubscriptionListView(APIView):
                 'success': False,
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class RegisterView(APIView):
+    permission_classes = []  # Allow unauthenticated access
+    
+    @swagger_auto_schema(
+        tags=['auth'],
+        operation_description="Register a new user",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', 'password', 'nickname'],
+            properties={
+                'email': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='User email address',
+                    example='user@example.com'
+                ),
+                'password': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='User password',
+                    example='securepassword123'
+                ),
+                'nickname': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='User nickname',
+                    example='JohnDoe'
+                ),
+            }
+        ),
+        responses={
+            201: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                    'message': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example='User registered successfully'
+                    ),
+                    'data': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@example.com'),
+                            'nickname': openapi.Schema(type=openapi.TYPE_STRING, example='JohnDoe'),
+                            'subscription_tier': openapi.Schema(type=openapi.TYPE_STRING, example='FREE'),
+                            'access': openapi.Schema(type=openapi.TYPE_STRING, example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...'),
+                            'refresh': openapi.Schema(type=openapi.TYPE_STRING, example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...')
+                        }
+                    )
+                }
+            ),
+            400: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'code': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='EMAIL_EXISTS'
+                            ),
+                            'message': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='Email already registered'
+                            )
+                        }
+                    )
+                }
+            )
+        }
+    )
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            password = request.data.get('password')
+            nickname = request.data.get('nickname')
+            
+            if not all([email, password, nickname]):
+                return Response({
+                    'error': {
+                        'code': 'MISSING_FIELDS',
+                        'message': 'Email, password, and nickname are required'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate email format
+            if '@' not in email or '.' not in email.split('@')[1]:
+                return Response({
+                    'error': {
+                        'code': 'INVALID_EMAIL',
+                        'message': 'Invalid email format'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if email already exists
+            if User.objects.filter(email=email).exists():
+                return Response({
+                    'error': {
+                        'code': 'EMAIL_EXISTS',
+                        'message': 'Email already registered'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Create new user
+            user = User.objects.create_user(
+                username=email,  # Using email as username
+                email=email,
+                password=password,
+                first_name=nickname,  # Using nickname as first_name
+                subscription_tier='FREE'  # Set default subscription tier
+            )
+            
+            # Generate JWT tokens
+            tokens = TokenObtainPairSerializer.get_token(user)
+            
+            return Response({
+                'success': True,
+                'message': 'User registered successfully',
+                'data': {
+                    'email': user.email,
+                    'nickname': user.first_name,
+                    'subscription_tier': user.subscription_tier,
+                    'access': str(tokens.access_token),
+                    'refresh': str(tokens)
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({
+                'error': {
+                    'code': 'REGISTRATION_ERROR',
+                    'message': str(e)
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
