@@ -53,6 +53,8 @@ class WalletViewSet(mixins.CreateModelMixin,
         """
         Filter queryset to return only the authenticated user's wallets.
         """
+        if getattr(self, 'swagger_fake_view', False):
+            return Wallet.objects.none()
         return self.queryset.filter(user=self.request.user)
     
     def perform_create(self, serializer):
@@ -63,13 +65,79 @@ class WalletViewSet(mixins.CreateModelMixin,
     
     @swagger_auto_schema(
         tags=['wallets'],
-        operation_description="List user's wallets or create a new wallet",
+        operation_summary="List user's wallets",
+        operation_description="Retrieve a paginated list of the authenticated user's wallets",
         responses={
-            200: WalletSerializer,
-            400: "Bad Request",
-            401: "Unauthorized",
-            403: "Forbidden - Cannot modify other users' wallets",
-            405: "Method not allowed"
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'count': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                    'next': openapi.Schema(type=openapi.TYPE_STRING, example='http://api.example.org/accounts/?offset=20&limit=20'),
+                    'previous': openapi.Schema(type=openapi.TYPE_STRING, example='http://api.example.org/accounts/?offset=0&limit=20'),
+                    'results': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'id': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                                'name': openapi.Schema(type=openapi.TYPE_STRING, example='My Wallet'),
+                                'address': openapi.Schema(type=openapi.TYPE_STRING, example='0x123...'),
+                                'created_at': openapi.Schema(type=openapi.TYPE_STRING, example='2024-01-01T00:00:00Z')
+                            }
+                        )
+                    )
+                }
+            ),
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - Cannot access other users' wallets"
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        tags=['wallets'],
+        operation_summary="Create a new wallet",
+        operation_description="Create a new wallet for the authenticated user",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['name', 'address'],
+            properties={
+                'name': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Name of the wallet',
+                    example='My Wallet'
+                ),
+                'address': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Blockchain address of the wallet',
+                    example='0x123...'
+                )
+            }
+        ),
+        responses={
+            201: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'id': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                    'name': openapi.Schema(type=openapi.TYPE_STRING, example='My Wallet'),
+                    'address': openapi.Schema(type=openapi.TYPE_STRING, example='0x123...'),
+                    'created_at': openapi.Schema(type=openapi.TYPE_STRING, example='2024-01-01T00:00:00Z')
+                }
+            ),
+            400: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'code': openapi.Schema(type=openapi.TYPE_STRING, example='INVALID_ADDRESS'),
+                            'message': openapi.Schema(type=openapi.TYPE_STRING, example='Invalid wallet address')
+                        }
+                    )
+                }
+            ),
+            401: "Unauthorized - Authentication required"
         }
     )
     def create(self, request, *args, **kwargs):
@@ -77,10 +145,33 @@ class WalletViewSet(mixins.CreateModelMixin,
     
     @swagger_auto_schema(
         tags=['wallets'],
-        operation_description="Delete a wallet",
+        operation_summary="Get wallet details",
+        operation_description="Retrieve details of a specific wallet",
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'id': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                    'name': openapi.Schema(type=openapi.TYPE_STRING, example='My Wallet'),
+                    'address': openapi.Schema(type=openapi.TYPE_STRING, example='0x123...'),
+                    'created_at': openapi.Schema(type=openapi.TYPE_STRING, example='2024-01-01T00:00:00Z')
+                }
+            ),
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - Cannot access other users' wallets",
+            404: "Wallet not found"
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        tags=['wallets'],
+        operation_summary="Delete a wallet",
+        operation_description="Delete a specific wallet",
         responses={
             204: "Wallet deleted successfully",
-            401: "Unauthorized",
+            401: "Unauthorized - Authentication required",
             403: "Forbidden - Cannot delete other users' wallets",
             404: "Wallet not found"
         }
@@ -103,6 +194,8 @@ class ReportViewSet(mixins.CreateModelMixin,
     pagination_class = CustomPagination
     
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Report.objects.none()
         return self.queryset.filter(wallet__in=Wallet.objects.filter(user=self.request.user))
     
     def perform_create(self, serializer):
@@ -118,30 +211,135 @@ class ReportViewSet(mixins.CreateModelMixin,
     
     @swagger_auto_schema(
         tags=['reports'],
-        operation_description="List user's reports or create a new report",
+        operation_summary="List user's reports",
+        operation_description="Retrieve a paginated list of reports for the authenticated user's wallets",
         responses={
-            200: ReportSerializer,
-            400: "Bad Request",
-            401: "Unauthorized",
-            403: "Forbidden - Cannot access reports for other users' wallets",
-            405: "Method not allowed"
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'count': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                    'next': openapi.Schema(type=openapi.TYPE_STRING, example='http://api.example.org/reports/?offset=20&limit=20'),
+                    'previous': openapi.Schema(type=openapi.TYPE_STRING, example='http://api.example.org/reports/?offset=0&limit=20'),
+                    'results': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'id': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                                'wallet': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                                'title': openapi.Schema(type=openapi.TYPE_STRING, example='Monthly Report'),
+                                'content': openapi.Schema(type=openapi.TYPE_STRING, example='Report content...'),
+                                'created_at': openapi.Schema(type=openapi.TYPE_STRING, example='2024-01-01T00:00:00Z')
+                            }
+                        )
+                    )
+                }
+            ),
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - Cannot access reports for other users' wallets"
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        tags=['reports'],
+        operation_summary="Create a new report",
+        operation_description="Create a new report for one of the authenticated user's wallets",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['wallet', 'title', 'content'],
+            properties={
+                'wallet': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='ID of the wallet this report belongs to',
+                    example=1
+                ),
+                'title': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Title of the report',
+                    example='Monthly Report'
+                ),
+                'content': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Content of the report',
+                    example='Report content...'
+                )
+            }
+        ),
+        responses={
+            201: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'id': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                    'wallet': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                    'title': openapi.Schema(type=openapi.TYPE_STRING, example='Monthly Report'),
+                    'content': openapi.Schema(type=openapi.TYPE_STRING, example='Report content...'),
+                    'created_at': openapi.Schema(type=openapi.TYPE_STRING, example='2024-01-01T00:00:00Z')
+                }
+            ),
+            400: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'code': openapi.Schema(type=openapi.TYPE_STRING, example='INVALID_WALLET'),
+                            'message': openapi.Schema(type=openapi.TYPE_STRING, example='Wallet not found or does not belong to user')
+                        }
+                    )
+                }
+            ),
+            401: "Unauthorized - Authentication required"
         }
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-
+    
+    @swagger_auto_schema(
+        tags=['reports'],
+        operation_summary="Get report details",
+        operation_description="Retrieve details of a specific report",
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'id': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                    'wallet': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                    'title': openapi.Schema(type=openapi.TYPE_STRING, example='Monthly Report'),
+                    'content': openapi.Schema(type=openapi.TYPE_STRING, example='Report content...'),
+                    'created_at': openapi.Schema(type=openapi.TYPE_STRING, example='2024-01-01T00:00:00Z')
+                }
+            ),
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - Cannot access reports for other users' wallets",
+            404: "Report not found"
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        auto_schema=None  # Hide update and delete operations from Swagger
+    )
     def update(self, request, *args, **kwargs):
         return Response(
             {"detail": "Updates are not allowed for reports."},
             status=status.HTTP_403_FORBIDDEN
         )
     
+    @swagger_auto_schema(
+        auto_schema=None  # Hide update and delete operations from Swagger
+    )
     def partial_update(self, request, *args, **kwargs):
         return Response(
             {"detail": "Updates are not allowed for reports."},
             status=status.HTTP_403_FORBIDDEN
         )
     
+    @swagger_auto_schema(
+        auto_schema=None  # Hide update and delete operations from Swagger
+    )
     def destroy(self, request, *args, **kwargs):
         return Response(
             {"detail": "Deletion is not allowed for reports."},
@@ -379,10 +577,47 @@ class SubscriptionStatusView(APIView):
     
     @swagger_auto_schema(
         tags=['subscriptions'],
-        operation_description="Get current user's subscription status",
+        operation_summary="Get subscription status",
+        operation_description="Retrieve the current user's subscription status and details",
         responses={
-            200: "Subscription status retrieved successfully",
-            401: "Unauthorized"
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                    'subscription': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'tier': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                description='Subscription tier',
+                                enum=['FREE', 'PRO', 'WHALE'],
+                                example='PRO'
+                            ),
+                            'is_active': openapi.Schema(
+                                type=openapi.TYPE_BOOLEAN,
+                                description='Whether the subscription is currently active',
+                                example=True
+                            ),
+                            'end_date': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                description='Subscription end date in ISO format',
+                                example='2024-12-31T23:59:59Z'
+                            )
+                        }
+                    )
+                }
+            ),
+            401: "Unauthorized - Authentication required",
+            500: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=False),
+                    'message': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example='An error occurred while retrieving subscription status'
+                    )
+                }
+            )
         }
     )
     def get(self, request):
@@ -425,22 +660,63 @@ class TossPaymentInitiateView(APIView):
     
     @swagger_auto_schema(
         tags=['payments'],
-        operation_description="Initiate a Toss payment for subscription",
+        operation_summary="Initiate Toss payment",
+        operation_description="Initiate a payment process for subscription upgrade using Toss Payments",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=['tier'],
             properties={
                 'tier': openapi.Schema(
                     type=openapi.TYPE_STRING,
-                    description='Subscription tier (pro or whale)',
-                    enum=['pro', 'whale']
-                ),
+                    description='Subscription tier to upgrade to',
+                    enum=['pro', 'whale'],
+                    example='pro'
+                )
             }
         ),
         responses={
-            200: "Payment initiation successful",
-            400: "Invalid tier",
-            401: "Unauthorized"
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                    'order_id': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        description='Unique order ID for the payment',
+                        example='COBIA-ABC123'
+                    ),
+                    'amount': openapi.Schema(
+                        type=openapi.TYPE_INTEGER,
+                        description='Payment amount in KRW',
+                        example=9900
+                    ),
+                    'tier': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        description='Selected subscription tier',
+                        example='pro'
+                    )
+                }
+            ),
+            400: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=False),
+                    'message': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example='Invalid tier. Must be either "pro" or "whale".'
+                    )
+                }
+            ),
+            401: "Unauthorized - Authentication required",
+            500: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=False),
+                    'message': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example='An error occurred while initiating payment'
+                    )
+                }
+            )
         }
     )
     def post(self, request):
@@ -663,11 +939,72 @@ class BTCSubscriptionStatusView(APIView):
     
     @swagger_auto_schema(
         tags=['subscriptions'],
-        operation_description="Get user's BTC payment and subscription status",
+        operation_summary="Get BTC subscription status",
+        operation_description="Retrieve the current user's BTC payment and subscription status",
         responses={
-            200: "Status retrieved successfully",
-            401: "Unauthorized",
-            404: "No BTC payment found"
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                    'btc_payment': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'confirmed': openapi.Schema(
+                                type=openapi.TYPE_BOOLEAN,
+                                description='Whether the BTC payment is confirmed',
+                                example=True
+                            ),
+                            'tx_hash': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                description='Bitcoin transaction hash',
+                                example='a1b2c3d4e5f6...'
+                            ),
+                            'amount': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                description='BTC amount',
+                                example='0.001'
+                            ),
+                            'confirmed_at': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                description='Payment confirmation timestamp in ISO format',
+                                example='2024-01-01T00:00:00Z'
+                            )
+                        }
+                    ),
+                    'subscription': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'tier': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                description='Subscription tier',
+                                enum=['FREE', 'PRO', 'WHALE'],
+                                example='PRO'
+                            ),
+                            'is_active': openapi.Schema(
+                                type=openapi.TYPE_BOOLEAN,
+                                description='Whether the subscription is currently active',
+                                example=True
+                            ),
+                            'end_date': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                description='Subscription end date in ISO format',
+                                example='2024-12-31T23:59:59Z'
+                            )
+                        }
+                    )
+                }
+            ),
+            401: "Unauthorized - Authentication required",
+            500: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=False),
+                    'message': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example='An error occurred while retrieving subscription status'
+                    )
+                }
+            )
         }
     )
     def get(self, request):
