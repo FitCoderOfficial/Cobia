@@ -19,38 +19,72 @@ from .models import (
     BTCTransaction,
     User
 )
+from .serializers import WalletSerializer, ReportSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from decimal import Decimal
+from rest_framework.pagination import LimitOffsetPagination
 
 # Create your views here.
 
-class WalletViewSet(viewsets.ModelViewSet):
+class CustomPagination(LimitOffsetPagination):
+    default_limit = 20
+    max_limit = 100
+
+class WalletViewSet(mixins.CreateModelMixin,
+                  mixins.RetrieveModelMixin,
+                  mixins.ListModelMixin,
+                  mixins.DestroyModelMixin,
+                  viewsets.GenericViewSet):
+    """
+    A viewset for viewing and editing user wallets.
+    Users can only access their own wallets.
+    Only GET, POST, and DELETE methods are allowed.
+    """
     permission_classes = [IsAuthenticated]
+    serializer_class = WalletSerializer
     queryset = Wallet.objects.all()
+    http_method_names = ['get', 'post', 'delete']
+    pagination_class = CustomPagination
     
     def get_queryset(self):
-        return self.queryset.all()
+        """
+        Filter queryset to return only the authenticated user's wallets.
+        """
+        return self.queryset.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        """
+        Set the user when creating a new wallet.
+        """
+        serializer.save(user=self.request.user)
     
     @swagger_auto_schema(
         tags=['wallets'],
-        operation_description="List all wallets or create a new wallet",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'address': openapi.Schema(type=openapi.TYPE_STRING, description='Wallet address'),
-                'alias': openapi.Schema(type=openapi.TYPE_STRING, description='Wallet alias'),
-            },
-            required=['address']
-        ),
+        operation_description="List user's wallets or create a new wallet",
         responses={
-            200: "Success",
+            200: WalletSerializer,
             400: "Bad Request",
-            401: "Unauthorized"
+            401: "Unauthorized",
+            403: "Forbidden - Cannot modify other users' wallets",
+            405: "Method not allowed"
         }
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        tags=['wallets'],
+        operation_description="Delete a wallet",
+        responses={
+            204: "Wallet deleted successfully",
+            401: "Unauthorized",
+            403: "Forbidden - Cannot delete other users' wallets",
+            404: "Wallet not found"
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 
 class ReportViewSet(mixins.CreateModelMixin,
                    mixins.RetrieveModelMixin,
@@ -61,30 +95,34 @@ class ReportViewSet(mixins.CreateModelMixin,
     Update and delete operations are not allowed.
     """
     permission_classes = [IsAuthenticated]
+    serializer_class = ReportSerializer
     queryset = Report.objects.all()
-    http_method_names = ['get', 'post']  # Only allow GET and POST methods
+    http_method_names = ['get', 'post']
+    pagination_class = CustomPagination
     
     def get_queryset(self):
-        return self.queryset.filter(wallet__in=Wallet.objects.all())
+        return self.queryset.filter(wallet__in=Wallet.objects.filter(user=self.request.user))
+    
+    def perform_create(self, serializer):
+        """
+        Validate that the wallet belongs to the user and save the report.
+        """
+        wallet_id = self.request.data.get('wallet')
+        try:
+            wallet = Wallet.objects.get(id=wallet_id, user=self.request.user)
+            serializer.save(wallet=wallet)
+        except Wallet.DoesNotExist:
+            raise serializers.ValidationError({"wallet": "Wallet not found or does not belong to user"})
     
     @swagger_auto_schema(
         tags=['reports'],
-        operation_description="List all reports or create a new report",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'wallet': openapi.Schema(type=openapi.TYPE_INTEGER, description='Wallet ID'),
-                'summary': openapi.Schema(type=openapi.TYPE_STRING, description='Report summary'),
-                'risk_score': openapi.Schema(type=openapi.TYPE_INTEGER, description='Risk score (0-100)'),
-                'profit_estimate': openapi.Schema(type=openapi.TYPE_NUMBER, description='Estimated profit'),
-            },
-            required=['wallet', 'summary', 'risk_score', 'profit_estimate']
-        ),
+        operation_description="List user's reports or create a new report",
         responses={
-            200: "Success",
+            200: ReportSerializer,
             400: "Bad Request",
             401: "Unauthorized",
-            403: "Forbidden - Update/Delete not allowed"
+            403: "Forbidden - Cannot access reports for other users' wallets",
+            405: "Method not allowed"
         }
     )
     def create(self, request, *args, **kwargs):
@@ -118,15 +156,97 @@ class TossPaymentConfirmView(APIView):
             type=openapi.TYPE_OBJECT,
             required=['paymentKey', 'orderId', 'amount'],
             properties={
-                'paymentKey': openapi.Schema(type=openapi.TYPE_STRING),
-                'orderId': openapi.Schema(type=openapi.TYPE_STRING),
-                'amount': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'paymentKey': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Payment key received from Toss Payments',
+                    example='5zJ4xY7m0kODPaRp6GrXYR3gqoNbl4v5'
+                ),
+                'orderId': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Unique order ID generated during payment initiation',
+                    example='COBIA-ABC123'
+                ),
+                'amount': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='Payment amount in KRW',
+                    example=99000
+                ),
             }
         ),
         responses={
-            200: "Payment confirmed successfully",
-            400: "Invalid parameters",
-            401: "Unauthorized"
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                    'message': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example='Payment confirmed successfully'
+                    ),
+                    'data': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'payment_id': openapi.Schema(type=openapi.TYPE_INTEGER, example=1),
+                            'amount': openapi.Schema(type=openapi.TYPE_INTEGER, example=99000),
+                            'status': openapi.Schema(type=openapi.TYPE_STRING, example='SUCCESS')
+                        }
+                    )
+                }
+            ),
+            400: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'code': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='PAYMENT_EXPIRED'
+                            ),
+                            'message': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='Payment session has expired'
+                            )
+                        }
+                    )
+                }
+            ),
+            401: "Unauthorized",
+            409: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'code': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='DUPLICATE_PAYMENT'
+                            ),
+                            'message': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='Payment already processed'
+                            )
+                        }
+                    )
+                }
+            ),
+            500: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'code': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='INTERNAL_SERVER_ERROR'
+                            ),
+                            'message': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='An unexpected error occurred'
+                            )
+                        }
+                    )
+                }
+            )
         }
     )
     def post(self, request):
@@ -140,6 +260,13 @@ class TossPaymentConfirmView(APIView):
                     'success': False,
                     'message': 'Missing required parameters'
                 }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check for existing payment
+            if TossPayment.objects.filter(order_id=order_id).exists():
+                return Response({
+                    'success': False,
+                    'message': 'Payment already processed'
+                }, status=status.HTTP_409_CONFLICT)
 
             # Validate against PendingPayment
             try:
@@ -169,62 +296,76 @@ class TossPaymentConfirmView(APIView):
                     'message': 'Invalid order ID'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Call Toss Payments API to confirm payment
-            toss_api_url = f'https://api.tosspayments.com/v1/payments/{payment_key}'
+            # Call Toss API to confirm payment
+            toss_api_url = "https://api.tosspayments.com/v1/payments/confirm"
             headers = {
-                'Authorization': f'Basic {settings.TOSS_SECRET_KEY}',
-                'Content-Type': 'application/json'
+                "Authorization": f"Basic {settings.TOSS_SECRET_KEY}",
+                "Content-Type": "application/json"
             }
             payload = {
-                'orderId': order_id,
-                'amount': amount
+                "paymentKey": payment_key,
+                "orderId": order_id,
+                "amount": amount
             }
 
-            response = requests.post(toss_api_url, json=payload, headers=headers)
-            payment_data = response.json()
+            response = requests.post(
+                toss_api_url,
+                headers=headers,
+                json=payload
+            )
 
             if response.status_code != 200:
+                error_data = response.json()
                 return Response({
                     'success': False,
-                    'message': payment_data.get('message', 'Payment confirmation failed')
+                    'message': error_data.get('message', 'Payment confirmation failed'),
+                    'code': error_data.get('code')
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Create TossPayment object
+            payment_data = response.json()
+
+            # Validate payment status
+            if payment_data.get('status') != 'DONE':
+                return Response({
+                    'success': False,
+                    'message': f"Invalid payment status: {payment_data.get('status')}"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create TossPayment record
             payment = TossPayment.objects.create(
                 user=request.user,
                 order_id=order_id,
                 payment_key=payment_key,
                 amount=amount,
-                method=payment_data.get('method', ''),
-                status='APPROVED',
-                approved_at=payment_data.get('approvedAt')
+                method=payment_data.get('method', 'UNKNOWN'),
+                approved_at=timezone.now(),
+                status='SUCCESS'
             )
 
-            # Clean up the pending payment
-            pending_payment.delete()
-
             # Determine subscription tier based on amount
-            if int(amount) >= 100000:  # 100,000원 이상
-                tier = 'whale'
-            else:
-                tier = 'pro'
+            if amount == 99000:  # Pro tier
+                activate_subscription(request.user, 'pro')
+            elif amount == 990000:  # Whale tier
+                activate_subscription(request.user, 'whale')
 
-            # Activate subscription
-            subscription = activate_subscription(request.user, tier)
+            # Clean up pending payment
+            pending_payment.delete()
 
             return Response({
                 'success': True,
-                'payment': {
-                    'order_id': payment.order_id,
+                'message': 'Payment confirmed successfully',
+                'data': {
+                    'payment_id': payment.id,
                     'amount': payment.amount,
                     'status': payment.status
-                },
-                'subscription': {
-                    'tier': subscription.tier,
-                    'end_date': subscription.end_date
                 }
             })
 
+        except requests.exceptions.RequestException as e:
+            return Response({
+                'success': False,
+                'message': 'Failed to communicate with payment server'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             return Response({
                 'success': False,
@@ -339,6 +480,7 @@ class TossPaymentInitiateView(APIView):
 
 class AdminPaymentHistoryView(APIView):
     permission_classes = [IsAdminUser]
+    pagination_class = CustomPagination
     
     @swagger_auto_schema(
         tags=['admin'],
@@ -349,6 +491,20 @@ class AdminPaymentHistoryView(APIView):
                 openapi.IN_QUERY,
                 description="Filter by user email",
                 type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                'limit',
+                openapi.IN_QUERY,
+                description="Number of results to return per page",
+                type=openapi.TYPE_INTEGER,
+                required=False
+            ),
+            openapi.Parameter(
+                'offset',
+                openapi.IN_QUERY,
+                description="The initial index from which to return the results",
+                type=openapi.TYPE_INTEGER,
                 required=False
             )
         ],
@@ -370,19 +526,22 @@ class AdminPaymentHistoryView(APIView):
             if email_filter:
                 payments = payments.filter(user__email__icontains=email_filter)
             
+            # Apply pagination
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(payments, request)
+            
             # Format the payment records
             payment_history = [{
                 'email': payment.user.email,
                 'order_id': payment.order_id,
                 'amount': payment.amount,
-                'method': payment.get_method_display(),  # Get human-readable method name
-                'status': payment.get_status_display(),  # Get human-readable status
+                'method': payment.get_method_display(),
+                'status': payment.get_status_display(),
                 'approved_at': payment.approved_at.isoformat() if payment.approved_at else None
-            } for payment in payments]
+            } for payment in page]
             
-            return Response({
+            return paginator.get_paginated_response({
                 'success': True,
-                'count': len(payment_history),
                 'payments': payment_history
             })
             
@@ -555,11 +714,41 @@ class BTCSubscriptionStatusView(APIView):
 
 class AdminSubscriptionListView(APIView):
     permission_classes = [IsAdminUser]
+    pagination_class = CustomPagination
     
+    @swagger_auto_schema(
+        tags=['admin'],
+        operation_description="Get subscription list (admin only)",
+        manual_parameters=[
+            openapi.Parameter(
+                'limit',
+                openapi.IN_QUERY,
+                description="Number of results to return per page",
+                type=openapi.TYPE_INTEGER,
+                required=False
+            ),
+            openapi.Parameter(
+                'offset',
+                openapi.IN_QUERY,
+                description="The initial index from which to return the results",
+                type=openapi.TYPE_INTEGER,
+                required=False
+            )
+        ],
+        responses={
+            200: "Subscription list retrieved successfully",
+            401: "Unauthorized",
+            403: "Forbidden - Admin only"
+        }
+    )
     def get(self, request):
         try:
             # Get all subscriptions with related user data
             subscriptions = Subscription.objects.select_related('user').all().order_by('-created_at')
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(subscriptions, request)
             
             subscription_list = [{
                 'email': sub.user.email,
@@ -569,11 +758,10 @@ class AdminSubscriptionListView(APIView):
                 'end_date': sub.end_date.isoformat() if sub.end_date else None,
                 'created_at': sub.created_at.isoformat(),
                 'updated_at': sub.updated_at.isoformat()
-            } for sub in subscriptions]
+            } for sub in page]
             
-            return Response({
+            return paginator.get_paginated_response({
                 'success': True,
-                'count': len(subscription_list),
                 'subscriptions': subscription_list
             })
             

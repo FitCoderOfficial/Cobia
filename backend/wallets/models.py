@@ -62,12 +62,17 @@ def activate_subscription(user, tier):
     return subscription
 
 class Wallet(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wallets')
     address = models.CharField(max_length=42, unique=True)
     alias = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['user', 'address']  # Prevent duplicate addresses per user
+
     def __str__(self):
-        return f"{self.alias or self.address}"
+        return f"{self.alias or self.address} ({self.user.email})"
 
 class Report(models.Model):
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='reports')
