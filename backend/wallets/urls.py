@@ -6,7 +6,10 @@ from .views import (
     TossPaymentConfirmView,
     SubscriptionStatusView,
     TossPaymentInitiateView,
-    AdminPaymentHistoryView
+    AdminPaymentHistoryView,
+    BTCPaymentConfirmView,
+    BTCSubscriptionStatusView,
+    AdminSubscriptionListView
 )
 
 # DRF router for ViewSets
@@ -22,7 +25,12 @@ urlpatterns = [
     # Payment endpoints
     path('payments/initiate/', TossPaymentInitiateView.as_view(), name='payment-initiate'),
     path('payments/confirm/', TossPaymentConfirmView.as_view(), name='payment-confirm'),
+    path('payments/btc/confirm/', BTCPaymentConfirmView.as_view(), name='btc-payment-confirm'),
+    path('payments/btc/status/', BTCSubscriptionStatusView.as_view(), name='btc-subscription-status'),
+    
+    # Admin endpoints
     path('admin/payments/', AdminPaymentHistoryView.as_view(), name='admin-payment-history'),
+    path('admin/subscriptions/', AdminSubscriptionListView.as_view(), name='admin-subscription-list'),
     
     # Subscription status endpoint
     path('subscriptions/status/', SubscriptionStatusView.as_view(), name='subscription-status'),

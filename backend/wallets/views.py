@@ -9,9 +9,19 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.utils import timezone
-from .models import TossPayment, activate_subscription, PendingPayment, Subscription, Wallet, Report
+from .models import (
+    TossPayment, 
+    activate_subscription, 
+    PendingPayment, 
+    Subscription, 
+    Wallet, 
+    Report,
+    BTCTransaction,
+    User
+)
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from decimal import Decimal
 
 # Create your views here.
 
@@ -23,6 +33,7 @@ class WalletViewSet(viewsets.ModelViewSet):
         return self.queryset.all()
     
     @swagger_auto_schema(
+        tags=['wallets'],
         operation_description="List all wallets or create a new wallet",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -51,11 +62,13 @@ class ReportViewSet(mixins.CreateModelMixin,
     """
     permission_classes = [IsAuthenticated]
     queryset = Report.objects.all()
+    http_method_names = ['get', 'post']  # Only allow GET and POST methods
     
     def get_queryset(self):
         return self.queryset.filter(wallet__in=Wallet.objects.all())
     
     @swagger_auto_schema(
+        tags=['reports'],
         operation_description="List all reports or create a new report",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -99,36 +112,21 @@ class TossPaymentConfirmView(APIView):
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
+        tags=['payments'],
         operation_description="Confirm a Toss payment and activate subscription",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=['paymentKey', 'orderId', 'amount'],
             properties={
-                'paymentKey': openapi.Schema(type=openapi.TYPE_STRING, description='Payment key from Toss'),
-                'orderId': openapi.Schema(type=openapi.TYPE_STRING, description='Order ID'),
-                'amount': openapi.Schema(type=openapi.TYPE_INTEGER, description='Payment amount'),
+                'paymentKey': openapi.Schema(type=openapi.TYPE_STRING),
+                'orderId': openapi.Schema(type=openapi.TYPE_STRING),
+                'amount': openapi.Schema(type=openapi.TYPE_INTEGER),
             }
         ),
         responses={
-            200: openapi.Response(
-                description="Payment confirmed successfully",
-                examples={
-                    "application/json": {
-                        "success": True,
-                        "payment": {
-                            "order_id": "ORDER_123",
-                            "amount": 100000,
-                            "status": "APPROVED"
-                        },
-                        "subscription": {
-                            "tier": "WHALE",
-                            "end_date": "2024-04-20T00:00:00Z"
-                        }
-                    }
-                }
-            ),
-            400: "Invalid request parameters or payment validation failed",
-            500: "Internal server error"
+            200: "Payment confirmed successfully",
+            400: "Invalid parameters",
+            401: "Unauthorized"
         }
     )
     def post(self, request):
@@ -237,23 +235,11 @@ class SubscriptionStatusView(APIView):
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
+        tags=['subscriptions'],
         operation_description="Get current user's subscription status",
         responses={
-            200: openapi.Response(
-                description="Subscription status retrieved successfully",
-                examples={
-                    "application/json": {
-                        "success": True,
-                        "subscription": {
-                            "tier": "PRO",
-                            "is_active": True,
-                            "end_date": "2024-04-20T00:00:00Z"
-                        }
-                    }
-                }
-            ),
-            401: "Unauthorized",
-            500: "Internal server error"
+            200: "Subscription status retrieved successfully",
+            401: "Unauthorized"
         }
     )
     def get(self, request):
@@ -295,7 +281,8 @@ class TossPaymentInitiateView(APIView):
     }
     
     @swagger_auto_schema(
-        operation_description="Initiate a payment for subscription",
+        tags=['payments'],
+        operation_description="Initiate a Toss payment for subscription",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=['tier'],
@@ -308,20 +295,9 @@ class TossPaymentInitiateView(APIView):
             }
         ),
         responses={
-            200: openapi.Response(
-                description="Payment initiation successful",
-                examples={
-                    "application/json": {
-                        "success": True,
-                        "order_id": "COBIA-1234-5678",
-                        "amount": 9900,
-                        "tier": "pro"
-                    }
-                }
-            ),
-            400: "Invalid tier or other validation error",
-            401: "Unauthorized",
-            500: "Internal server error"
+            200: "Payment initiation successful",
+            400: "Invalid tier",
+            401: "Unauthorized"
         }
     )
     def post(self, request):
@@ -363,8 +339,25 @@ class TossPaymentInitiateView(APIView):
 
 class AdminPaymentHistoryView(APIView):
     permission_classes = [IsAdminUser]
-    swagger_schema = None  # Exclude from Swagger documentation
     
+    @swagger_auto_schema(
+        tags=['admin'],
+        operation_description="Get payment history (admin only)",
+        manual_parameters=[
+            openapi.Parameter(
+                'email',
+                openapi.IN_QUERY,
+                description="Filter by user email",
+                type=openapi.TYPE_STRING,
+                required=False
+            )
+        ],
+        responses={
+            200: "Payment history retrieved successfully",
+            401: "Unauthorized",
+            403: "Forbidden - Admin only"
+        }
+    )
     def get(self, request):
         try:
             # Get email filter from query params
@@ -391,6 +384,197 @@ class AdminPaymentHistoryView(APIView):
                 'success': True,
                 'count': len(payment_history),
                 'payments': payment_history
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class BTCPaymentConfirmView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    @swagger_auto_schema(
+        tags=['payments'],
+        operation_description="Confirm a Bitcoin payment and activate subscription",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['tx_hash', 'amount', 'user_id'],
+            properties={
+                'tx_hash': openapi.Schema(type=openapi.TYPE_STRING, description='Bitcoin transaction hash'),
+                'amount': openapi.Schema(type=openapi.TYPE_STRING, description='BTC amount'),
+                'user_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='User ID'),
+            }
+        ),
+        responses={
+            200: "Payment confirmed successfully",
+            400: "Invalid parameters",
+            401: "Unauthorized",
+            404: "User not found"
+        }
+    )
+    def post(self, request):
+        try:
+            # Get and validate parameters
+            tx_hash = request.data.get('tx_hash')
+            amount = request.data.get('amount')
+            user_id = request.data.get('user_id')
+            
+            if not all([tx_hash, amount, user_id]):
+                return Response({
+                    'success': False,
+                    'message': 'Missing required parameters'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate tx_hash format (should be 64 characters hexadecimal)
+            if not len(tx_hash) == 64 or not all(c in '0123456789abcdefABCDEF' for c in tx_hash):
+                return Response({
+                    'success': False,
+                    'message': 'Invalid transaction hash format'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Convert amount to Decimal and validate
+            try:
+                amount = Decimal(amount)
+                if amount <= 0:
+                    raise ValueError("Amount must be positive")
+            except (ValueError, DecimalException):
+                return Response({
+                    'success': False,
+                    'message': 'Invalid amount format'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get user
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': 'User not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Create BTC transaction record
+            transaction = BTCTransaction.objects.create(
+                user=user,
+                tx_hash=tx_hash,
+                amount=amount,
+                status='CONFIRMED',
+                confirmed_at=timezone.now()
+            )
+            
+            # Determine subscription tier based on BTC amount
+            # Example: 0.001 BTC for Pro, 0.01 BTC for Whale
+            if amount >= Decimal('0.01'):
+                tier = 'whale'
+            elif amount >= Decimal('0.001'):
+                tier = 'pro'
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'Amount too low for subscription'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Activate subscription
+            subscription = activate_subscription(user, tier)
+            
+            return Response({
+                'success': True,
+                'transaction': {
+                    'tx_hash': transaction.tx_hash,
+                    'amount': str(transaction.amount),
+                    'status': transaction.status
+                },
+                'subscription': {
+                    'tier': subscription.tier,
+                    'end_date': subscription.end_date
+                }
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class BTCSubscriptionStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    @swagger_auto_schema(
+        tags=['subscriptions'],
+        operation_description="Get user's BTC payment and subscription status",
+        responses={
+            200: "Status retrieved successfully",
+            401: "Unauthorized",
+            404: "No BTC payment found"
+        }
+    )
+    def get(self, request):
+        try:
+            # Get user's latest BTC transaction
+            latest_transaction = BTCTransaction.objects.filter(
+                user=request.user
+            ).order_by('-created_at').first()
+            
+            # Get user's subscription
+            subscription = Subscription.objects.filter(
+                user=request.user
+            ).first()
+            
+            if not latest_transaction:
+                return Response({
+                    'success': True,
+                    'btc_payment': None,
+                    'subscription': {
+                        'tier': subscription.tier if subscription else 'FREE',
+                        'is_active': subscription.is_active if subscription else False,
+                        'end_date': subscription.end_date.isoformat() if subscription and subscription.end_date else None
+                    }
+                })
+            
+            return Response({
+                'success': True,
+                'btc_payment': {
+                    'confirmed': latest_transaction.status == 'CONFIRMED',
+                    'tx_hash': latest_transaction.tx_hash,
+                    'amount': str(latest_transaction.amount),
+                    'confirmed_at': latest_transaction.confirmed_at.isoformat() if latest_transaction.confirmed_at else None
+                },
+                'subscription': {
+                    'tier': subscription.tier if subscription else 'FREE',
+                    'is_active': subscription.is_active if subscription else False,
+                    'end_date': subscription.end_date.isoformat() if subscription and subscription.end_date else None
+                }
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AdminSubscriptionListView(APIView):
+    permission_classes = [IsAdminUser]
+    
+    def get(self, request):
+        try:
+            # Get all subscriptions with related user data
+            subscriptions = Subscription.objects.select_related('user').all().order_by('-created_at')
+            
+            subscription_list = [{
+                'email': sub.user.email,
+                'tier': sub.tier,
+                'is_active': sub.is_active,
+                'start_date': sub.start_date.isoformat() if sub.start_date else None,
+                'end_date': sub.end_date.isoformat() if sub.end_date else None,
+                'created_at': sub.created_at.isoformat(),
+                'updated_at': sub.updated_at.isoformat()
+            } for sub in subscriptions]
+            
+            return Response({
+                'success': True,
+                'count': len(subscription_list),
+                'subscriptions': subscription_list
             })
             
         except Exception as e:

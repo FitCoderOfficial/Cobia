@@ -202,3 +202,23 @@ class PendingPayment(models.Model):
             amount=amount,
             expires_at=expires_at
         )
+
+class BTCTransaction(models.Model):
+    TRANSACTION_STATUS = [
+        ('PENDING', 'Pending'),
+        ('CONFIRMED', 'Confirmed'),
+        ('FAILED', 'Failed'),
+    ]
+
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='btc_transactions')
+    tx_hash = models.CharField(max_length=64, unique=True)
+    amount = models.DecimalField(max_digits=18, decimal_places=8)  # BTC amount with 8 decimal places
+    status = models.CharField(max_length=20, choices=TRANSACTION_STATUS, default='PENDING')
+    created_at = models.DateTimeField(auto_now_add=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"BTC Transaction {self.tx_hash[:8]}... ({self.amount} BTC)"
