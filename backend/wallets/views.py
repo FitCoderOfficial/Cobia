@@ -25,6 +25,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from decimal import Decimal
 from rest_framework.pagination import LimitOffsetPagination
+from django.contrib.auth import authenticate
 
 # Create your views here.
 
@@ -901,5 +902,111 @@ class RegisterView(APIView):
                 'error': {
                     'code': 'REGISTRATION_ERROR',
                     'message': str(e)
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+class LoginView(APIView):
+    permission_classes = []  # Allow unauthenticated access
+
+    @swagger_auto_schema(
+        tags=['auth'],
+        operation_description="Login with email and password",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', 'password'],
+            properties={
+                'email': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='User email address',
+                    example='user@example.com'
+                ),
+                'password': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='User password',
+                    example='securepassword123'
+                ),
+            }
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                    'message': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example='Login successful'
+                    ),
+                    'data': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@example.com'),
+                            'nickname': openapi.Schema(type=openapi.TYPE_STRING, example='JohnDoe'),
+                            'subscription_tier': openapi.Schema(type=openapi.TYPE_STRING, example='FREE'),
+                            'access': openapi.Schema(type=openapi.TYPE_STRING, example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...'),
+                            'refresh': openapi.Schema(type=openapi.TYPE_STRING, example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...')
+                        }
+                    )
+                }
+            ),
+            400: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'code': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='INVALID_CREDENTIALS'
+                            ),
+                            'message': openapi.Schema(
+                                type=openapi.TYPE_STRING,
+                                example='Invalid email or password'
+                            )
+                        }
+                    )
+                }
+            )
+        }
+    )
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        if not all([email, password]):
+            return Response({
+                'error': {
+                    'code': 'MISSING_FIELDS',
+                    'message': 'Email and password are required'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Get user by email
+            user = User.objects.get(email=email)
+            
+            # Check password
+            if user.check_password(password):
+                # Generate JWT tokens
+                tokens = TokenObtainPairSerializer.get_token(user)
+                
+                return Response({
+                    'success': True,
+                    'message': 'Login successful',
+                    'data': {
+                        'email': user.email,
+                        'nickname': user.first_name,  # Using first_name as nickname
+                        'subscription_tier': user.subscription_tier,
+                        'access': str(tokens.access_token),
+                        'refresh': str(tokens)
+                    }
+                }, status=status.HTTP_200_OK)
+            else:
+                raise User.DoesNotExist
+                
+        except User.DoesNotExist:
+            return Response({
+                'error': {
+                    'code': 'INVALID_CREDENTIALS',
+                    'message': 'Invalid email or password'
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
