@@ -47,7 +47,7 @@ export const Navbar = () => {
                   Reports
                 </Link>
                 <Link href="/pricing" className={navLinkClass('/pricing')}>
-                  {subscription?.tier === 'PRO' ? 'Manage Subscription' : 'Upgrade to PRO'}
+                  Pricing
                 </Link>
                 <button
                   onClick={logout}

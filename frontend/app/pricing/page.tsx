@@ -135,7 +135,7 @@ export default function PricingPage() {
               당신에게 맞는 플랜을 선택하세요
             </h2>
             <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
-              모든 플랜은 7일 무료 체험이 가능하며, 언제든지 취소할 수 있습니다.
+              모든 플랜은 7일 무료 체험이 가능하며, 언제든지 취소할 수 있습니다
             </p>
 
             {/* Billing Toggle */}
@@ -271,10 +271,10 @@ export default function PricingPage() {
             ))}
           </div>
 
-          <div className="mt-16 text-center">
+          <div className="mt-24 text-center">
             <p className="text-gray-500 max-w-3xl mx-auto">
-              모든 플랜은 언제든지 해지할 수 있으며, 숨겨진 비용이 없습니다.
-              문의사항이 있으신가요? <a href="/contact" className="text-indigo-600 hover:text-indigo-500">고객센터</a>에 문의해주세요.
+              모든 플랜은 언제든지 해지할 수 있으며, 숨겨진 비용이 없습니다<br />
+              문의사항이 있으신가요? <a href="/contact" className="text-indigo-600 hover:text-indigo-500">고객센터</a>에 문의해주세요
             </p>
           </div>
         </div>
