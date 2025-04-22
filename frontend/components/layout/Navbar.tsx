@@ -1,10 +1,26 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/auth/useAuth';
 
 export const Navbar = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, subscription, logout } = useAuth();
+  const pathname = usePathname();
+
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return pathname === path;
+    }
+    return pathname.startsWith(path);
+  };
+
+  const navLinkClass = (path: string) => {
+    const baseClass = "px-3 py-2 text-sm font-medium";
+    return isActive(path) 
+      ? `${baseClass} text-indigo-600 font-semibold`
+      : `${baseClass} text-gray-600`;
+  };
 
   return (
     <nav className="bg-white border-b border-gray-100">
@@ -12,51 +28,45 @@ export const Navbar = () => {
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
-            <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-colors">
+            <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
               Cobia
             </Link>
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center justify-end space-x-8">
             {isAuthenticated ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className="text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium transition-colors"
-                >
+                <Link href="/" className={navLinkClass('/')}>
                   Dashboard
                 </Link>
-                <Link
-                  href="/wallets"
-                  className="text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium transition-colors"
-                >
+                <Link href="/wallets" className={navLinkClass('/wallets')}>
                   Wallets
                 </Link>
-                <Link
-                  href="/reports"
-                  className="text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium transition-colors"
-                >
+                <Link href="/reports" className={navLinkClass('/reports')}>
                   Reports
+                </Link>
+                <Link href="/pricing" className={navLinkClass('/pricing')}>
+                  {subscription?.tier === 'PRO' ? 'Manage Subscription' : 'Upgrade to PRO'}
                 </Link>
                 <button
                   onClick={logout}
-                  className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/20 transition-colors"
+                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/20 transition-colors"
                 >
                   Sign Out
                 </button>
               </>
             ) : (
               <>
-                <Link
-                  href="/auth/login"
-                  className="text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium transition-colors"
-                >
+                <Link href="/auth/login" className={navLinkClass('/auth/login')}>
                   Sign In
+                </Link>
+                <Link href="/pricing" className={navLinkClass('/pricing')}>
+                  Pricing
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/20 transition-colors"
+                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/20 transition-colors"
                 >
                   Sign Up
                 </Link>
