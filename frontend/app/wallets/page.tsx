@@ -10,6 +10,7 @@ import { Plus } from 'lucide-react';
 import { AdBanner } from '@/components/ads/AdBanner';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import { PortfolioDashboard } from '@/components/dashboard/PortfolioDashboard';
 
 interface Token {
   symbol: string;
@@ -119,6 +120,11 @@ function WalletsPage() {
 
             {/* 메인 콘텐츠 */}
             <div className="flex-1 max-w-4xl mx-auto w-full">
+              {/* 포트폴리오 대시보드 */}
+              <div className="mb-8">
+                <PortfolioDashboard />
+              </div>
+
               <div className="flex items-center justify-between mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">내 지갑</h1>
                 <button

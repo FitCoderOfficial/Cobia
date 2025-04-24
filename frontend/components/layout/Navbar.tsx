@@ -50,6 +50,9 @@ export const Navbar = () => {
                 <Link href="/reports" className={navLinkClass('/reports')}>
                   리포트
                 </Link>
+                <Link href="/whales" className={navLinkClass('/whales')}>
+                  고래
+                </Link>
               </div>
             ) : (
               <div className="flex items-center space-x-8">
