@@ -1,0 +1,46 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": {
+      "title": "Overview",
+      "totalValue": "Total Value",
+      "dailyChange": "Daily Change",
+      "weeklyChange": "Weekly Change",
+      "monthlyChange": "Monthly Change"
+    },
+    "portfolio": {
+      "title": "Portfolio",
+      "distribution": "Asset Distribution",
+      "topHoldings": "Top Holdings",
+      "recentTransactions": "Recent Transactions",
+      "noTransactions": "No transactions found"
+    },
+    "alerts": {
+      "title": "Alerts",
+      "whaleMovements": "Whale Movements",
+      "priceAlerts": "Price Alerts",
+      "marketTrends": "Market Trends",
+      "noAlerts": "No new alerts"
+    },
+    "insights": {
+      "title": "Insights",
+      "marketAnalysis": "Market Analysis",
+      "trendingCoins": "Trending Coins",
+      "aiPredictions": "AI Predictions",
+      "noInsights": "No insights available"
+    },
+    "actions": {
+      "addWallet": "Add Wallet",
+      "generateReport": "Generate Report",
+      "viewAll": "View All",
+      "refresh": "Refresh"
+    },
+    "filters": {
+      "timeRange": "Time Range",
+      "assets": "Assets",
+      "type": "Type",
+      "apply": "Apply",
+      "reset": "Reset"
+    }
+  }
+} 

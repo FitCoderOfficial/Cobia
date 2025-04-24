@@ -1,0 +1,60 @@
+{
+  "wallet": {
+    "title": "Wallet",
+    "overview": {
+      "title": "Wallet Overview",
+      "totalBalance": "Total Balance",
+      "totalValue": "Total Value",
+      "lastUpdated": "Last Updated"
+    },
+    "list": {
+      "title": "Wallet List",
+      "addWallet": "Add Wallet",
+      "noWallets": "No wallets registered",
+      "search": "Search wallets",
+      "filter": "Filter"
+    },
+    "details": {
+      "title": "Wallet Details",
+      "address": "Address",
+      "balance": "Balance",
+      "value": "Value",
+      "transactions": "Transactions",
+      "holdings": "Holdings",
+      "activity": "Activity",
+      "noTransactions": "No transactions found",
+      "noHoldings": "No holdings found"
+    },
+    "add": {
+      "title": "Add Wallet",
+      "address": "Wallet Address",
+      "name": "Wallet Name",
+      "description": "Description",
+      "submit": "Add",
+      "cancel": "Cancel",
+      "validation": {
+        "required": "This field is required",
+        "invalidAddress": "Invalid address",
+        "duplicate": "Wallet already registered"
+      }
+    },
+    "edit": {
+      "title": "Edit Wallet",
+      "name": "Wallet Name",
+      "description": "Description",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "confirmDelete": "Are you sure you want to delete this wallet?"
+    },
+    "monitoring": {
+      "title": "Monitoring",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "settings": "Settings",
+      "alerts": "Alert Settings",
+      "threshold": "Threshold",
+      "frequency": "Frequency"
+    }
+  }
+} 

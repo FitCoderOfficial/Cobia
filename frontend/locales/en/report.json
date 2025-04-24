@@ -1,0 +1,65 @@
+{
+  "report": {
+    "title": "Reports",
+    "overview": {
+      "title": "Report Overview",
+      "totalReports": "Total Reports",
+      "lastGenerated": "Last Generated",
+      "usage": "Usage"
+    },
+    "list": {
+      "title": "Report List",
+      "generate": "Generate Report",
+      "noReports": "No reports generated",
+      "search": "Search reports",
+      "filter": "Filter"
+    },
+    "details": {
+      "title": "Report Details",
+      "generatedAt": "Generated At",
+      "type": "Type",
+      "status": "Status",
+      "summary": "Summary",
+      "details": "Details",
+      "download": "Download",
+      "share": "Share",
+      "delete": "Delete"
+    },
+    "generate": {
+      "title": "Generate Report",
+      "type": "Report Type",
+      "dateRange": "Date Range",
+      "wallets": "Wallets",
+      "assets": "Assets",
+      "metrics": "Metrics",
+      "submit": "Generate",
+      "cancel": "Cancel",
+      "validation": {
+        "required": "This field is required",
+        "invalidDate": "Invalid date",
+        "noWallets": "Please select at least one wallet"
+      }
+    },
+    "types": {
+      "portfolio": "Portfolio Analysis",
+      "performance": "Performance Analysis",
+      "risk": "Risk Analysis",
+      "market": "Market Analysis",
+      "custom": "Custom Report"
+    },
+    "status": {
+      "generating": "Generating",
+      "completed": "Completed",
+      "failed": "Failed",
+      "expired": "Expired"
+    },
+    "metrics": {
+      "title": "Metrics",
+      "roi": "ROI",
+      "volatility": "Volatility",
+      "risk": "Risk",
+      "correlation": "Correlation",
+      "trend": "Trend"
+    }
+  }
+} 

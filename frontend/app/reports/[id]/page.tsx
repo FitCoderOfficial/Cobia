@@ -417,7 +417,8 @@ function ReportPage() {
 
   const barChartOptions = {
     responsive: true,
-    maintainAspectRatio: false,
+    maintainAspectRatio: true,
+    aspectRatio: 2,
     animation: {
       duration: 800,
     },
@@ -457,7 +458,8 @@ function ReportPage() {
 
   const pieChartOptions = {
     responsive: true,
-    maintainAspectRatio: false,
+    maintainAspectRatio: true,
+    aspectRatio: 1.5,
     animation: {
       duration: 800,
     },
@@ -511,7 +513,7 @@ function ReportPage() {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            Back to Reports
+            리포트로 돌아가기
           </button>
 
           {isLoadingReport ? (
@@ -570,28 +572,28 @@ function ReportPage() {
                 </div>
               </div>
 
-              {/* Key Metrics */}
+              {/* Metrics */}
               {report.metrics && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <MetricCard
-                    title="Total BTC Moved"
+                    title="이동된 BTC 총량"
                     value={report.metrics.totalBtcMoved}
                     unit=" BTC"
                     change={report.metrics.totalBtcMovedChange}
                   />
                   <MetricCard
-                    title="Top Exchange"
+                    title="주요 거래소"
                     value={report.metrics.topExchange}
                     isText={true}
                     change={report.metrics.topExchangeChange}
                   />
                   <MetricCard
-                    title="Transaction Count"
+                    title="거래 횟수"
                     value={report.metrics.transactionCount}
                     change={report.metrics.transactionCountChange}
                   />
                   <MetricCard
-                    title="Avg. Transaction Size"
+                    title="평균 거래 규모"
                     value={report.metrics.averageTransactionSize}
                     unit=" BTC"
                     change={report.metrics.averageTransactionSizeChange}
@@ -606,7 +608,7 @@ function ReportPage() {
                   {report.whaleTransactions && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Whale Transactions</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">웨일 거래</h3>
                         <div className="flex space-x-2">
                           <button
                             onClick={() => setTimeRange('24h')}
@@ -616,7 +618,7 @@ function ReportPage() {
                                 : 'text-gray-500 hover:text-gray-700'
                             }`}
                           >
-                            24h
+                            24시간
                           </button>
                           <button
                             onClick={() => setTimeRange('1w')}
@@ -626,7 +628,7 @@ function ReportPage() {
                                 : 'text-gray-500 hover:text-gray-700'
                             }`}
                           >
-                            1w
+                            1주일
                           </button>
                           <button
                             onClick={() => setTimeRange('1m')}
@@ -636,15 +638,12 @@ function ReportPage() {
                                 : 'text-gray-500 hover:text-gray-700'
                             }`}
                           >
-                            1m
+                            1개월
                           </button>
                         </div>
                       </div>
-                      <div className="h-80">
-                        <Bar
-                          data={chartData.barChartData}
-                          options={barChartOptions}
-                        />
+                      <div className="w-full">
+                        <Bar data={chartData.barChartData} options={barChartOptions} />
                       </div>
                     </div>
                   )}
@@ -652,32 +651,31 @@ function ReportPage() {
                   {/* Asset Distribution Chart */}
                   {report.assetDistribution && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Asset Distribution</h3>
-                      <div className="h-80">
-                        <Pie
-                          data={chartData.pieChartData}
-                          options={pieChartOptions}
-                        />
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">자산 분포</h3>
+                      </div>
+                      <div className="w-full">
+                        <Pie data={chartData.pieChartData} options={pieChartOptions} />
                       </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Recommendations */}
+              {/* Key Recommendations */}
               {report.recommendations && (
-                <div className="bg-indigo-50 rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-indigo-900 mb-4">Key Recommendations</h3>
-                  <ul className="space-y-3">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">주요 권장사항</h3>
+                  <div className="space-y-4">
                     {report.recommendations.map((recommendation, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-medium">
+                      <div key={index} className="flex items-start">
+                        <div className="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 text-sm font-medium">
                           {index + 1}
-                        </span>
-                        <span className="ml-3 text-indigo-700">{recommendation}</span>
-                      </li>
+                        </div>
+                        <p className="ml-3 text-gray-600">{recommendation}</p>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
 

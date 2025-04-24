@@ -6,15 +6,15 @@ import { Layout } from '@/components/layout/Layout';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const errorMessages = {
-  cancel: "Payment was cancelled",
-  error: "Payment could not be processed",
-  default: "We couldn't complete your subscription",
+  cancel: "결제가 취소되었습니다",
+  error: "결제를 처리할 수 없습니다",
+  default: "구독을 완료할 수 없습니다",
 };
 
 const errorDescriptions = {
-  cancel: "You've cancelled the payment process. No worries, you can try again whenever you're ready.",
-  error: "There was an issue processing your payment. Please try again or contact support if the problem persists.",
-  default: "Something went wrong with your payment. Please try again or contact our support team for assistance.",
+  cancel: "결제 과정을 취소하셨습니다. 준비가 되시면 언제든 다시 시도하실 수 있습니다.",
+  error: "결제 처리 중 문제가 발생했습니다. 다시 시도하시거나 문제가 지속되면 고객센터로 문의해주세요.",
+  default: "결제 중 문제가 발생했습니다. 다시 시도하시거나 고객센터로 문의해주세요.",
 };
 
 export default function PaymentFailPage() {
@@ -117,7 +117,7 @@ export default function PaymentFailPage() {
                     transition={{ delay: 0.2 }}
                   >
                     <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-                      Payment Failed
+                      결제 실패
                     </h1>
                     <p className="text-lg sm:text-xl text-gray-600 mb-2">
                       {errorMessages[reason]}
@@ -140,7 +140,7 @@ export default function PaymentFailPage() {
                       onClick={() => router.push('/pricing')}
                       className="w-full px-6 py-4 text-white bg-gradient-to-r from-red-500 to-red-600 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-red-500/25 hover:shadow-xl"
                     >
-                      Try Again
+                      다시 시도하기
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -148,7 +148,7 @@ export default function PaymentFailPage() {
                       onClick={() => router.push('/dashboard')}
                       className="w-full px-6 py-4 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl font-medium transition-all duration-200"
                     >
-                      Go to Dashboard
+                      대시보드로 이동
                     </motion.button>
                   </motion.div>
                 </motion.div>

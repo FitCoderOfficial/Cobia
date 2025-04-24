@@ -174,10 +174,10 @@ export default function PaymentSuccessPage() {
                     transition={{ delay: 0.4 }}
                   >
                     <h1 className="text-4xl sm:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                      Welcome to {mockSubscriptionData.plan}!
+                      {mockSubscriptionData.plan}플랜을 시작합니다!
                     </h1>
                     <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-                      You're now a premium member. Enjoy all features with no limits!
+                      이제 프리미엄 회원입니다. 모든 기능을 무제한으로 이용해보세요!
                     </p>
                   </motion.div>
 
@@ -188,18 +188,18 @@ export default function PaymentSuccessPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
                   >
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Subscription Summary</h2>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">구독 정보</h2>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Plan</span>
+                        <span className="text-gray-600">플랜</span>
                         <span className="font-medium text-gray-900">{mockSubscriptionData.plan}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Amount</span>
+                        <span className="text-gray-600">금액</span>
                         <span className="font-medium text-gray-900">₩{mockSubscriptionData.amount}/월</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Period</span>
+                        <span className="text-gray-600">기간</span>
                         <span className="font-medium text-gray-900">
                           {mockSubscriptionData.startDate} ~ {mockSubscriptionData.endDate}
                         </span>
@@ -220,7 +220,7 @@ export default function PaymentSuccessPage() {
                       onClick={() => router.push('/dashboard')}
                       className="w-full px-6 py-4 text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-indigo-500/25 hover:shadow-xl"
                     >
-                      Go to Dashboard
+                      대시보드로 이동
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -228,7 +228,7 @@ export default function PaymentSuccessPage() {
                       onClick={() => router.push('/reports')}
                       className="w-full px-6 py-4 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl font-medium transition-all duration-200"
                     >
-                      View My Reports
+                      리포트 보기
                     </motion.button>
                   </motion.div>
                 </motion.div>

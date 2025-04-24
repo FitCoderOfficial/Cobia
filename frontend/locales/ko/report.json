@@ -1,0 +1,65 @@
+{
+  "report": {
+    "title": "리포트",
+    "overview": {
+      "title": "리포트 개요",
+      "totalReports": "총 리포트 수",
+      "lastGenerated": "마지막 생성일",
+      "usage": "사용량"
+    },
+    "list": {
+      "title": "리포트 목록",
+      "generate": "리포트 생성하기",
+      "noReports": "생성된 리포트가 없습니다",
+      "search": "리포트 검색",
+      "filter": "필터"
+    },
+    "details": {
+      "title": "리포트 상세",
+      "generatedAt": "생성일",
+      "type": "유형",
+      "status": "상태",
+      "summary": "요약",
+      "details": "상세 내용",
+      "download": "다운로드",
+      "share": "공유하기",
+      "delete": "삭제하기"
+    },
+    "generate": {
+      "title": "리포트 생성",
+      "type": "리포트 유형",
+      "dateRange": "기간",
+      "wallets": "지갑",
+      "assets": "자산",
+      "metrics": "지표",
+      "submit": "생성하기",
+      "cancel": "취소",
+      "validation": {
+        "required": "필수 입력 항목입니다",
+        "invalidDate": "유효하지 않은 날짜입니다",
+        "noWallets": "지갑을 선택해주세요"
+      }
+    },
+    "types": {
+      "portfolio": "포트폴리오 분석",
+      "performance": "성과 분석",
+      "risk": "리스크 분석",
+      "market": "시장 분석",
+      "custom": "커스텀 리포트"
+    },
+    "status": {
+      "generating": "생성 중",
+      "completed": "완료",
+      "failed": "실패",
+      "expired": "만료됨"
+    },
+    "metrics": {
+      "title": "지표",
+      "roi": "ROI",
+      "volatility": "변동성",
+      "risk": "리스크",
+      "correlation": "상관관계",
+      "trend": "추세"
+    }
+  }
+} 

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import api from '@/lib/api';
+import { AdBanner } from '@/components/ads/AdBanner';
 
 interface SubscriptionStatus {
   tier: 'FREE' | 'PRO' | 'WHALE';
@@ -78,88 +79,111 @@ export default function Home() {
   if (isAuthenticated) {
     return (
       <Layout>
-        <div className="bg-gray-50 min-h-[calc(100vh-4rem)]">
-          <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
-                Welcome back, {user?.nickname || 'User'}!
-              </h1>
-              <p className="mt-4 text-xl text-gray-500">
-                Your current subscription: {subscription?.tier || 'FREE'}
-              </p>
-              {subscription?.end_date && (
-                <p className="mt-2 text-sm text-gray-500">
-                  Valid until: {new Date(subscription.end_date).toLocaleDateString()}
-                </p>
-              )}
-            </div>
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-50 py-12">
+          <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row justify-between gap-8">
+              {/* 왼쪽 광고 */}
+              <div className="hidden lg:block lg:w-[300px]">
+                <div className="sticky top-8 h-[calc(100vh-8rem)]">
+                  <AdBanner position="dashboard" className="h-full" />
+                </div>
+              </div>
 
-            <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              <Link
-                href="/wallets"
-                className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div>
-                  <span className="rounded-lg inline-flex p-3 bg-indigo-50 text-indigo-700 ring-4 ring-white">
-                    <svg
-                      className="h-6 w-6"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                      />
-                    </svg>
-                  </span>
-                </div>
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    View Wallets
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Track and manage your cryptocurrency wallets
-                  </p>
-                </div>
-              </Link>
+              {/* 메인 콘텐츠 */}
+              <div className="flex-1 max-w-4xl mx-auto w-full">
+                <h1 className="text-3xl font-bold text-gray-900">대시보드</h1>
+                
+                <div className="mt-8 grid grid-cols-1 gap-8">
+                  <div className="text-center">
+                    <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+                      Welcome back, {user?.nickname || 'User'}!
+                    </h2>
+                    <p className="mt-4 text-xl text-gray-500">
+                      Your current subscription: {subscription?.tier || 'FREE'}
+                    </p>
+                    {subscription?.end_date && (
+                      <p className="mt-2 text-sm text-gray-500">
+                        Valid until: {new Date(subscription.end_date).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
 
-              <Link
-                href="/reports"
-                className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div>
-                  <span className="rounded-lg inline-flex p-3 bg-indigo-50 text-indigo-700 ring-4 ring-white">
-                    <svg
-                      className="h-6 w-6"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                  <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2">
+                    <Link
+                      href="/wallets"
+                      className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-shadow"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                  </span>
+                      <div>
+                        <span className="rounded-lg inline-flex p-3 bg-indigo-50 text-indigo-700 ring-4 ring-white">
+                          <svg
+                            className="h-6 w-6"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                            />
+                          </svg>
+                        </span>
+                      </div>
+                      <div className="mt-8">
+                        <h3 className="text-lg font-medium">
+                          <span className="absolute inset-0" aria-hidden="true" />
+                          View Wallets
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-500">
+                          Track and manage your cryptocurrency wallets
+                        </p>
+                      </div>
+                    </Link>
+
+                    <Link
+                      href="/reports"
+                      className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <div>
+                        <span className="rounded-lg inline-flex p-3 bg-indigo-50 text-indigo-700 ring-4 ring-white">
+                          <svg
+                            className="h-6 w-6"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                        </span>
+                      </div>
+                      <div className="mt-8">
+                        <h3 className="text-lg font-medium">
+                          <span className="absolute inset-0" aria-hidden="true" />
+                          View Reports
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-500">
+                          Access your analysis reports and insights
+                        </p>
+                      </div>
+                    </Link>
+                  </div>
                 </div>
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    View Reports
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Access your analysis reports and insights
-                  </p>
+              </div>
+
+              {/* 오른쪽 광고 */}
+              <div className="hidden lg:block lg:w-[300px]">
+                <div className="sticky top-8 h-[calc(100vh-8rem)]">
+                  <AdBanner position="dashboard" className="h-full" />
                 </div>
-              </Link>
+              </div>
             </div>
           </div>
         </div>

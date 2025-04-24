@@ -139,23 +139,23 @@ export default function PricingPage() {
             </p>
 
             {/* Billing Toggle */}
-            <div className="mt-12 flex justify-center items-center space-x-3">
-              <span className={`text-sm ${!isYearly ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>월간 결제</span>
+            <div className="mt-12 flex justify-center items-center space-x-4">
+              <span className={`text-base ${!isYearly ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>월간 결제</span>
               <button
                 type="button"
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   isYearly ? 'bg-indigo-600' : 'bg-gray-200'
                 }`}
                 onClick={() => setIsYearly(!isYearly)}
               >
                 <span className="sr-only">요금제 전환</span>
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    isYearly ? 'translate-x-5' : 'translate-x-0'
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    isYearly ? 'translate-x-7' : 'translate-x-0'
                   }`}
                 />
               </button>
-              <span className={`text-sm ${isYearly ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
+              <span className={`text-base ${isYearly ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
                 연간 결제 <span className="text-indigo-600 font-semibold">(17% 할인)</span>
               </span>
             </div>
@@ -271,10 +271,10 @@ export default function PricingPage() {
             ))}
           </div>
 
-          <div className="mt-24 text-center">
+          <div className="mt-40 text-center">
             <p className="text-gray-500 max-w-3xl mx-auto">
-              모든 플랜은 언제든지 해지할 수 있으며, 숨겨진 비용이 없습니다<br />
-              문의사항이 있으신가요? <a href="/contact" className="text-indigo-600 hover:text-indigo-500">고객센터</a>에 문의해주세요
+              <span className="block">모든 플랜은 언제든지 해지할 수 있으며, 숨겨진 비용이 없습니다</span>
+              <span className="block">문의사항이 있으신가요? <a href="/contact" className="text-indigo-600 hover:text-indigo-500">고객센터</a>에 문의해주세요</span>
             </p>
           </div>
         </div>

@@ -1,0 +1,99 @@
+{
+  "subscription": {
+    "plans": {
+      "free": {
+        "name": "FREE",
+        "description": "Basic plan for individual investors",
+        "subtitle": "Perfect for those starting their crypto investment journey",
+        "features": {
+          "wallet": "1 wallet monitoring",
+          "report": "1 report per month",
+          "ads": "Includes ads",
+          "notifications": "No notifications",
+          "whale": "Whale alerts",
+          "ai": "AI insights",
+          "noAds": "Ad-free",
+          "priority": "Priority support"
+        },
+        "button": {
+          "text": "Start Free",
+          "subtext": "No credit card required"
+        }
+      },
+      "basic": {
+        "name": "BASIC",
+        "description": "Plan for active investors",
+        "subtitle": "For investors who need more features",
+        "features": {
+          "wallet": "3 wallet monitoring",
+          "report": "5 reports per month",
+          "alerts": "Limited whale alerts",
+          "ads": "Includes ads",
+          "ai": "AI insights",
+          "noAds": "Ad-free",
+          "priority": "Priority support",
+          "early": "Early access"
+        },
+        "button": {
+          "text": "Start 7-day Free Trial",
+          "subtext": "Cancel anytime"
+        }
+      },
+      "pro": {
+        "name": "PRO",
+        "description": "Premium plan for professional investors",
+        "subtitle": "For those who need professional analysis and insights",
+        "features": {
+          "wallet": "Unlimited wallet monitoring",
+          "report": "Unlimited reports",
+          "alerts": "Real-time whale alerts",
+          "ai": "AI insights",
+          "noAds": "Ad-free",
+          "priority": "Priority support",
+          "early": "Early access",
+          "tracking": "Real-time tracking"
+        },
+        "button": {
+          "text": "Start 7-day Free Trial",
+          "subtext": "Cancel anytime"
+        }
+      },
+      "premium": {
+        "name": "PREMIUM",
+        "description": "Enterprise plan for institutional investors",
+        "subtitle": "For institutions requiring large portfolio management and professional analysis",
+        "features": {
+          "wallet": "Unlimited wallet monitoring",
+          "report": "Unlimited reports",
+          "alerts": "Real-time whale alerts",
+          "ai": "AI insights",
+          "noAds": "Ad-free",
+          "priority": "Priority support",
+          "early": "Early access",
+          "tracking": "Real-time tracking"
+        },
+        "button": {
+          "text": "Start 7-day Free Trial",
+          "subtext": "Cancel anytime"
+        }
+      }
+    },
+    "upgrade": {
+      "title": "Upgrade Required",
+      "reportLimit": "You've exceeded the limit of {{count}} reports per month",
+      "walletLimit": "You've exceeded the limit of {{count}} wallet monitoring",
+      "aiLimit": "You've exceeded the limit of {{count}} AI insights per month",
+      "cta": "Upgrade to premium plan to access more features",
+      "button": {
+        "close": "Close",
+        "upgrade": "Upgrade"
+      }
+    },
+    "billing": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "discount": "17% off",
+      "toggle": "Toggle billing"
+    }
+  }
+} 
