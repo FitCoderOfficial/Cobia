@@ -47,12 +47,18 @@ export function InsightCard({
     }
   };
 
-  // 긴 숫자 값을 포맷팅하는 함수
   const formatValue = (val: string | number) => {
-    if (typeof val === 'string' && val.includes('SHIB')) {
-      const [num, unit] = val.split(' ');
-      const formatted = new Intl.NumberFormat('ko-KR').format(Number(num));
-      return `${formatted} ${unit}`;
+    if (typeof val === 'string') {
+      // SHIB나 다른 토큰 단위가 있는 경우
+      const match = val.match(/^([\d,]+)\s*(.+)$/);
+      if (match) {
+        const [_, numPart, unit] = match;
+        // 이미 포맷된 숫자는 다시 포맷하지 않음
+        if (!numPart.includes(',')) {
+          const formatted = new Intl.NumberFormat('ko-KR').format(Number(numPart));
+          return `${formatted} ${unit}`;
+        }
+      }
     }
     return val;
   };

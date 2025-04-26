@@ -139,3 +139,4 @@ export function InsightCard({ type, tokenSymbol, description, timestamp, isNew =
     </div>
   );
 } 
+ 
